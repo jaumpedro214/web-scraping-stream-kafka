@@ -1,12 +1,20 @@
-from nis import match
-from webScraper import WebScraperCrawler, WebScrapperCaption
-import re
+from webScraper import WebScrapperCaption
 
+import re
+import uuid
 import pprint
+
+import json
+from confluent_kafka import Producer
 
 def extract_price(text):
     # Format r$ 20,00
-    price = re.findall(r"R\$ \d+,\d+", text)[0]
+    matches = re.findall(r"R\$ \d+,\d+", text)
+    
+    if len(matches) == 0:
+        return None
+    
+    price = matches[0]
     price = price.replace("R$", "").replace(",", ".").strip()
     return float(price)
 
@@ -37,6 +45,13 @@ def extract_name(text):
 
 
 if __name__ == "__main__":
+    
+    # ==================================================================
+    #                   Configuring initial parameters
+    # ==================================================================
+    
+    
+    # Define the urls to be scrapped
     NUMBER_OF_PAGES = 2
     urls_base = [
         "https://www.lojaonline.nordestao.com.br/produtos/departamento/acougue/aves?page={}",
@@ -46,14 +61,43 @@ if __name__ == "__main__":
     ]
     element_class = "border-promotion"
     
+    # Instantiate kafka producer
+    TOPIC = "produtos"
+    PRODUCT_SCHEMA = {
+        "type": "struct",
+        "fields": [
+            {"type": "string", "optional": False, "field": "id"},
+            {"type": "string", "optional": True, "field": "nome"},
+            {"type": "float64", "optional": True, "field": "price"},
+            {"type": "float64", "optional": True, "field": "peso"},
+            {"type": "string", "optional": True, "field": "text"},
+            {"type": "string", "optional": True, "field": "tipo"},
+        ],
+        "optional": False,
+        "name": "produto"
+    }
+    producer = Producer({
+        "bootstrap.servers": "localhost:9092",
+        "client.id": "webScraper",
+    })
+    
+    
+    # ==================================================================
+    #                       Scraping the data
+    # ==================================================================
+    
     for url_base in urls_base:
+        print("Crawling: ", url_base)
         crawler = WebScrapperCaption(
             url_base, 
             pages=NUMBER_OF_PAGES, 
-            element_class=element_class
+            element_class=element_class,
+            headless=True
         )
         elements = crawler.get_data()
         crawler.quit()
+        
+        print("Found {} elements".format(len(elements)))
         
         data = [
             {
@@ -62,8 +106,28 @@ if __name__ == "__main__":
                 "nome": extract_name(text),
                 "text": text,
                 "tipo": url_base.split("/")[-2],
+                "id": str(uuid.uuid4()),
             }
             for text in elements
         ]
         
-    pprint.pprint(data)
+        # Transform data into AVRO format
+        # Send to Kafka
+        print("Sending to Kafka")
+        for item in data:
+            pprint.pprint(item)
+            # Transform data into AVRO format
+            producer.produce(
+                TOPIC,
+                value=json.dumps(
+                    {
+                        "schema": PRODUCT_SCHEMA, 
+                        "payload": item
+                    }
+                ),
+                key=item["id"]
+            )
+            producer.flush()
+            
+    
+    print( "Done" )

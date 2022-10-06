@@ -1,13 +1,13 @@
 version: '3.3'
 services:
-  postgres-db:
+  postgres:
     build: ./postgres
     container_name: postgres
     hostname: postgres
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: PRFACIDENTES
+      POSTGRES_USER: usuario
       POSTGRES_PASSWORD: 123
     volumes:
       - "./postgres/data:/var/lib/postgresql/data"
@@ -22,11 +22,44 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - postgres-db
+      - postgres
     environment:
       - MB_DB_TYPE=postgres
       - MB_DB_NAME=metabase
       - MB_DB_HOST=postgres
       - MB_DB_PORT=5432
-      - MB_DB_USER=PRFACIDENTES
+      - MB_DB_USER=usuario
       - MB_DB_PASS=123
+
+  zookeeper:
+    container_name: zookeper-scrap
+    image: quay.io/debezium/zookeeper:latest
+  kafka:
+    container_name: kafka-scrap
+    image: quay.io/debezium/kafka:latest
+    ports:
+     - 9092:9092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+  connect:
+    container_name: debezium-scrap
+    image: debezium/connect-jdbc-es:latest
+    build:
+      context: debezium-jdbc-es
+      args:
+        DEBEZIUM_VERSION: latest
+    ports:
+     - 8083:8083
+     - 5005:5005
+    links:
+     - kafka:kafka
+     - postgres:postgres
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:9092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=_connect_configs
+     - OFFSET_STORAGE_TOPIC=_connect_offsets
+     - STATUS_STORAGE_TOPIC=_source_connect_statuses
+     - CONNECT_JDBC_URL=jdbc:postgresql://postgres:5432/database
