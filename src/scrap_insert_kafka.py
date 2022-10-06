@@ -1,7 +1,7 @@
 from webScraper import WebScrapperCaption
 
 import re
-import uuid
+import hashlib
 import pprint
 
 import json
@@ -68,8 +68,8 @@ if __name__ == "__main__":
         "fields": [
             {"type": "string", "optional": False, "field": "id"},
             {"type": "string", "optional": True, "field": "nome"},
-            {"type": "float64", "optional": True, "field": "price"},
-            {"type": "float64", "optional": True, "field": "peso"},
+            {"type": "float", "optional": True, "field": "price"},
+            {"type": "float", "optional": True, "field": "peso"},
             {"type": "string", "optional": True, "field": "text"},
             {"type": "string", "optional": True, "field": "tipo"},
         ],
@@ -106,7 +106,7 @@ if __name__ == "__main__":
                 "nome": extract_name(text),
                 "text": text,
                 "tipo": url_base.split("/")[-2],
-                "id": str(uuid.uuid4()),
+                "id": str(hashlib.sha1(text.encode()).hexdigest())
             }
             for text in elements
         ]
@@ -124,8 +124,7 @@ if __name__ == "__main__":
                         "schema": PRODUCT_SCHEMA, 
                         "payload": item
                     }
-                ),
-                key=item["id"]
+                )
             )
             producer.flush()
             
