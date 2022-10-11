@@ -32,6 +32,7 @@ services:
     image: quay.io/debezium/zookeeper:latest
   kafka:
     container_name: kafka-scrap
+    hostname: kafka
     image: quay.io/debezium/kafka:latest
     ports:
      - 9092:9092
@@ -77,11 +78,3 @@ services:
       - MB_DB_PORT=5432
       - MB_DB_USER=usuario
       - MB_DB_PASS=123
-
-  # ---------------
-  # Scrap service
-  # ---------------
-
-  py-scraper:
-    build: ./src
-    command: python3 scrap_insert_kafka.py --number-of-pages 10 --kafka-server kafka:9092

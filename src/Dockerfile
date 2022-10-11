@@ -21,7 +21,7 @@ RUN wget --no-verbose -O /tmp/geckodriver.tar.gz https://github.com/mozilla/geck
   && chmod 755 /opt/geckodriver-$GECKODRIVER_VERSION \
   && ln -fs /opt/geckodriver-$GECKODRIVER_VERSION /usr/bin/geckodriver
 
-COPY *.py .
+# COPY *.py ./
 
 # keep container running
 CMD ["tail", "-f", "/dev/null"]
