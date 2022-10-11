@@ -38,8 +38,10 @@ if __name__ == "__main__":
     NUMBER_OF_PAGES = parser.parse_args().number_of_pages
     KAFKA_SERVER = parser.parse_args().kafka_server
     
-    
+    print("Number of pages: {}".format(NUMBER_OF_PAGES))
+    print("Kafka server: {}".format(KAFKA_SERVER))
     time.sleep(30)
+    
     
     # Configuring initial parameters
     # ==================================================================

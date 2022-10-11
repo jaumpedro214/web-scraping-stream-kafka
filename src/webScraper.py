@@ -82,15 +82,21 @@ class WebScraperCrawler:
             List of elements that match the element_class
         """
         
+        print(f"Getting elements from {url}")
         self.browser.get(url)
         
-        # wait for the page to load
-        wait = WebDriverWait(self.browser, 20)
-        wait.until(
-            lambda browser: browser.find_element_by_class_name(element_class)
-        )
+        try:
+            # wait for the page to load
+            wait = WebDriverWait(self.browser, 30)
+            wait.until(
+                lambda browser: browser.find_element_by_class_name(element_class)
+            )
+            
+            elements = self.browser.find_elements_by_class_name(element_class)
+        except Exception as e:
+            print(f"Error: {e}")
+            elements = []
         
-        elements = self.browser.find_elements_by_class_name(element_class)
         return elements
     
     def get_data(self):

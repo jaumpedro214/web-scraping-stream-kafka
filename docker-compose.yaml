@@ -78,3 +78,12 @@ services:
       - MB_DB_PORT=5432
       - MB_DB_USER=usuario
       - MB_DB_PASS=123
+
+  # ---------------
+  # Scrap service
+  # ---------------
+  py-scrap:
+    build: ./src
+    command: python3 scrap_insert_kafka.py --kafka-server kafka:9092 --number-of-pages 10
+    volumes:
+      - ./src:/src
