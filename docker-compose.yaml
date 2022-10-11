@@ -1,5 +1,10 @@
 version: '3.3'
 services:
+
+  # ---------------
+  # Postgres service
+  # ---------------
+
   postgres:
     build: ./postgres
     container_name: postgres
@@ -17,19 +22,10 @@ services:
     restart: always
     ports:
       - 8080:8080
-  metabase:
-    image: metabase/metabase:latest
-    ports:
-      - "3000:3000"
-    depends_on:
-      - postgres
-    environment:
-      - MB_DB_TYPE=postgres
-      - MB_DB_NAME=metabase
-      - MB_DB_HOST=postgres
-      - MB_DB_PORT=5432
-      - MB_DB_USER=usuario
-      - MB_DB_PASS=123
+
+  # ---------------
+  # Kafka EcoSystem
+  # ---------------
 
   zookeeper:
     container_name: zookeper-scrap
@@ -63,3 +59,29 @@ services:
      - OFFSET_STORAGE_TOPIC=_connect_offsets
      - STATUS_STORAGE_TOPIC=_source_connect_statuses
      - CONNECT_JDBC_URL=jdbc:postgresql://postgres:5432/database
+
+  # ---------------
+  # Metabase service
+  # ---------------
+
+  metabase:
+    image: metabase/metabase:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      - MB_DB_TYPE=postgres
+      - MB_DB_NAME=metabase
+      - MB_DB_HOST=postgres
+      - MB_DB_PORT=5432
+      - MB_DB_USER=usuario
+      - MB_DB_PASS=123
+
+  # ---------------
+  # Scrap service
+  # ---------------
+
+  py-scraper:
+    build: ./src
+    command: python3 scrap_insert_kafka.py --number-of-pages 10 --kafka-server kafka:9092

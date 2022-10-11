@@ -1,58 +1,48 @@
 from webScraper import WebScrapperCaption
+from extract_functions import extract_name, extract_price, extract_peso
 
-import re
 import hashlib
 import pprint
 
 import json
 from confluent_kafka import Producer
 
-def extract_price(text):
-    # Format r$ 20,00
-    matches = re.findall(r"R\$ \d+,\d+", text)
-    
-    if len(matches) == 0:
-        return None
-    
-    price = matches[0]
-    price = price.replace("R$", "").replace(",", ".").strip()
-    return float(price)
-
-def extract_peso(text):
-    # Format 1,5kg or 100g
-    
-    matches = re.findall(
-        r"\d+(?:,\d+){0,1}\s{0,1}kg|\d+g", 
-        text.lower()
-    )
-    
-    if len(matches) == 0:
-        return None
-
-    peso = matches[-1]
-    
-    if "kg" in peso:
-        peso = peso.replace("kg", "").replace(",", ".")
-        return float(peso)*1000
-    else:
-        peso = peso.replace("g", "")
-        return float(peso)
-    
-def extract_name(text):
-    # Format: name 100g
-    name = re.findall(r"\D+", text)[0]
-    return name
+import argparse
 
 
 if __name__ == "__main__":
     
+    # Parse arguments
     # ==================================================================
-    #                   Configuring initial parameters
+    # NUMBER_OF_PAGES int, default 2
+    # KAFKA_SERVER str, default localhost:9092
+    
+    parser = argparse.ArgumentParser(
+        description="Scraping data from a website and insert into kafka"
+    )
+    
+    parser.add_argument(
+        "--number-of-pages",
+        type=int,
+        default=2,
+        help="Number of pages to scrap"
+    )
+
+    parser.add_argument(
+        "--kafka-server",
+        type=str,
+        default="localhost:9092",
+        help="Kafka server address"
+    )
+    
+    NUMBER_OF_PAGES = parser.parse_args().number_of_pages
+    KAFKA_SERVER = parser.parse_args().kafka_server
+    
+    # Configuring initial parameters
     # ==================================================================
     
     
     # Define the urls to be scrapped
-    NUMBER_OF_PAGES = 2
     urls_base = [
         "https://www.lojaonline.nordestao.com.br/produtos/departamento/acougue/aves?page={}",
         "https://www.lojaonline.nordestao.com.br/produtos/departamento/acougue/peixes?page={}",
@@ -77,13 +67,12 @@ if __name__ == "__main__":
         "name": "produto"
     }
     producer = Producer({
-        "bootstrap.servers": "localhost:9092",
+        "bootstrap.servers": KAFKA_SERVER,
         "client.id": "webScraper",
     })
     
     
-    # ==================================================================
-    #                       Scraping the data
+    # Scraping the data
     # ==================================================================
     
     for url_base in urls_base:

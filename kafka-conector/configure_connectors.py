@@ -7,8 +7,7 @@ CONNECTORS = [
         "config": {
             "topics": "produtos",
             
-            "connector.class":
-                "io.confluent.connect.jdbc.JdbcSinkConnector",
+            "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
             "tasks.max": "1",
             
             "connection.url": "jdbc:postgresql://postgres:5432/produtos",
