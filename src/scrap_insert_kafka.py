@@ -99,7 +99,7 @@ if __name__ == "__main__":
                 "peso": extract_peso(text),
                 "nome": extract_name(text),
                 "text": text,
-                "tipo": url_base.split("/")[-2],
+                "tipo": url_base.split("/")[-1].split("?")[0],
                 "id": str(hashlib.sha1(text.encode()).hexdigest())
             }
             for text in elements
