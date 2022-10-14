@@ -3,14 +3,15 @@ import re
 def extract_price(text):
     # Format r$ 20,00
     
+    text = text.lower()
     # Get price NOT FOLLOWED by "kg"
-    matches = re.findall(r"R\$ \d+,\d{2}(?!\s{0,1}kg)", text)
+    matches = re.findall(r"r\$ \d+,\d{2}(?!\s{0,1}kg)", text)
     
     if len(matches) == 0:
         return None
     
     price = matches[0]
-    price = price.replace("R$", "").replace(",", ".").strip()
+    price = price.replace("r$", "").replace(",", ".").strip()
     
     return float(price)
 
