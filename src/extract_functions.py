@@ -2,17 +2,23 @@ import re
 
 def extract_price(text):
     # Format r$ 20,00
-    matches = re.findall(r"R\$ \d+,\d+", text)
+    
+    # Get price NOT FOLLOWED by "kg"
+    matches = re.findall(r"R\$ \d+,\d{2}(?!\s{0,1}kg)", text)
     
     if len(matches) == 0:
         return None
     
     price = matches[0]
     price = price.replace("R$", "").replace(",", ".").strip()
+    
     return float(price)
 
 def extract_peso(text):
     # Format 1,5kg or 100g
+    
+    # Get weight followed by "kg" or "g"
+    # And not preceded by "R$"
     
     matches = re.findall(
         r"[^$]{2}\s+(\d+(?:,\d+){0,1}\s{0,1}kg|\d+g)", 
